@@ -11,6 +11,7 @@ $(function() {
 		imgdata: null,
 		ctx: null,
 		footerH: 0, //底部高度
+		isTangible: false,
 
 		init: function() {
 			filter.footerH = $('.Grayscale').height();
@@ -20,6 +21,8 @@ $(function() {
 			//居中
 			var width = document.getElementById("form").clientWidth / 2;
 			$('#form').css('margin-left', '-' + width + 'px');
+
+			filter.isTangible = $.os.phone || $.os.tablet;
 
 			if (typeof FileReader == 'undefined') {
 				$('.tips').InnerHTML = "<p>你的浏览器不支持FileReader接口！</p>";
@@ -83,52 +86,64 @@ $(function() {
 				mix = 0;
 			datas[0] = temp;
 
-			$('.choice').each(function(idx) {
-				$('.choice').eq(idx).tap(function() {
+			if (filter.isTangible) {
+				$('.choice').each(function(idx) {
+					$('.choice').eq(idx).tap(function() {
+						events(this);
+					})
+				});
+			} else {
+				$('.choice').each(function(idx) {
+					$('.choice').eq(idx).click(function() {
+						events(this);
+					})
+				});
+			}
 
-					$('.result').css({
-						'bottom': '-20%'
-					});
+			function events(that) {
+				console.log('dfg');
+				$('.result').css({
+					'bottom': '-20%'
+				});
 
-					var oImg = new Image();
-					choiceName = $(this).parent().attr('class');
+				var oImg = new Image();
+				choiceName = $(that).parent().attr('class');
 
-					if (choiceName == 'Grayscale') {
-						oImg.src = filter.Grayscale();
-						datas.push(['Grayscale', oImg]);
-					} else if (choiceName == 'Brighten') {
-						oImg.src = filter.Brighten(delta += 5);
-						datas.push(['Brighten', oImg]);
-					} else if (choiceName == 'Blur') {
-						oImg.src = filter.Blur(blur += 2);
-						datas.push(['Blur', oImg]);
-					} else if (choiceName == 'Sharpen') {
-						if (mix < 1) {
-							oImg.src = filter.Sharpen(mix += 0.2);
-							datas.push(['Sharpen', oImg]);
-						}
-					} else if (choiceName == 'Undo') {
-						dataLength = datas.length;
-
-						if (dataLength > 1) {
-							temp = datas.pop();
-							filter.ctx.drawImage(datas[dataLength - 2][1], 0, 0, img.width, img.height);
-							filter.imgdata = filter.ctx.getImageData(0, 0, img.width, img.height);
-							if (temp[0] == 'Sharpen') {
-								mix -= 0.2
-							} else if (temp[0] == 'Brighten') {
-								delta -= 5;
-								console.log(delta);
-							}
-						} else {
-							$('.result').css({
-								'bottom': filter.footerH
-							});
-						}
-
+				if (choiceName == 'Grayscale') {
+					oImg.src = filter.Grayscale();
+					datas.push(['Grayscale', oImg]);
+				} else if (choiceName == 'Brighten') {
+					oImg.src = filter.Brighten(delta += 5);
+					datas.push(['Brighten', oImg]);
+				} else if (choiceName == 'Blur') {
+					oImg.src = filter.Blur(blur += 2);
+					datas.push(['Blur', oImg]);
+				} else if (choiceName == 'Sharpen') {
+					if (mix < 1) {
+						oImg.src = filter.Sharpen(mix += 0.2);
+						datas.push(['Sharpen', oImg]);
 					}
-				})
-			});
+				} else if (choiceName == 'Undo') {
+					dataLength = datas.length;
+
+					if (dataLength > 1) {
+						temp = datas.pop();
+						filter.ctx.drawImage(datas[dataLength - 2][1], 0, 0, img.width, img.height);
+						filter.imgdata = filter.ctx.getImageData(0, 0, img.width, img.height);
+						if (temp[0] == 'Sharpen') {
+							mix -= 0.2
+						} else if (temp[0] == 'Brighten') {
+							delta -= 5;
+							console.log(delta);
+						}
+					} else {
+						$('.result').css({
+							'bottom': filter.footerH
+						});
+					}
+
+				}
+			}
 
 
 			$('.save a').tap(function() {
@@ -270,6 +285,7 @@ $(function() {
 				d[i + 2] = iSumGreen / iCnt;
 				d[i + 3] = iSumBlue / iCnt;
 			}
+
 			filter.ctx.putImageData(filter.imgdata, 0, 0);
 			return filter.canvas.toDataURL();
 		},
